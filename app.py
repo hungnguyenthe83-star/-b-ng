@@ -1,38 +1,38 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-# Cấu hình trang Streamlit
+# Cấu hình giao diện trang Streamlit
 st.set_page_config(
-    page_title="4-Player Soccer Pro Arena", 
-    page_icon="⚽", 
+    page_title="Streamlit Space Shooter", 
+    page_icon="🚀", 
     layout="centered"
 )
 
-st.title("⚽ PRO SOCCER ARENA - 4 PLAYERS")
+st.title("🚀 SPACE SHOOTER ARENA - 2 PLAYERS")
 
-# Hướng dẫn nút bấm chia cột trực quan bằng Streamlit
+# Bảng hướng dẫn chơi trực quan
 st.markdown("""
 <div style="background-color: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; margin-bottom: 10px; font-size: 14px;">
-    <strong>🎮 SƠ ĐỒ ĐIỀU KHIỂN (4 NGƯỜI CHƠI):</strong><br>
+    <strong>🎮 HƯỚNG DẪN ĐIỀU KHIỂN BẮN SÚNG:</strong><br>
     <table style="width:100%; text-align:left; margin-top:5px; border-collapse: collapse; line-height: 1.6;">
         <tr style="color:#ff4757; font-weight:bold;">
-            <td>🔴 ĐỘI ĐỎ:</td>
-            <td>Hậu vệ: <strong>F / V</strong></td>
-            <td>Tiền đạo: <strong>W / S</strong></td>
+            <td>🔴 PHI THUYỀN ĐỎ:</td>
+            <td>Di chuyển: <strong>W, A, S, D</strong></td>
+            <td>Bắn: <strong>F</strong></td>
         </tr>
         <tr style="color:#2ed573; font-weight:bold;">
-            <td>🟢 ĐỘI XANH:</td>
-            <td>Tiền đạo: <strong>Mũi tên ⬆ / ⬇</strong></td>
-            <td>Hậu vệ: <strong>I / K</strong></td>
+            <td>🟢 PHI THUYỀN XANH:</td>
+            <td>Di chuyển: <strong>Mũi tên ⬆ ⬇ ⬅ ➡</strong></td>
+            <td>Bắn: <strong>M</strong> (hoặc <strong>0</strong>)</td>
         </tr>
     </table>
     <div style="margin-top: 8px; text-align:center; color: #ff9f43; font-weight: bold;">
-        ⏸ Nhấn phím SPACE (Khoảng trắng) hoặc click nút trong game để Tạm dừng
+        ⏸ Nhấn phím SPACE (Khoảng trắng) để Tạm dừng / Tiếp tục trò chơi
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-# Khối mã nguồn HTML/JS/CSS độc lập, sạch sẽ, không dùng f-string để tránh lỗi cú pháp Python
+# Toàn bộ mã nguồn Game (HTML/CSS/JS) độc lập, không dùng f-string để tránh lỗi cú pháp Python
 game_html = """
 <!DOCTYPE html>
 <html>
@@ -40,147 +40,119 @@ game_html = """
     <style>
         body {
             margin: 0;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            background: #050510;
             display: flex;
             justify-content: center;
             align-items: center;
             font-family: system-ui, -apple-system, sans-serif;
             flex-direction: column;
-            padding: 15px;
+            padding: 10px;
             border-radius: 16px;
             overflow: hidden;
         }
-        
-        .color-pickers-bar {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 12px;
-            color: white;
-            font-size: 14px;
-            align-items: center;
-        }
-        .color-item { display: flex; align-items: center; gap: 8px; }
-        .color-item input { cursor: pointer; border: none; width: 30px; height: 25px; border-radius: 4px; }
 
-        .scoreboard-container {
+        /* Thanh trạng thái UI Neon Esport */
+        .status-container {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0, 0, 0, 0.85);
-            padding: 8px 25px;
-            border-radius: 50px;
-            margin-bottom: 15px;
-            border: 2px solid #4a90e2;
-            gap: 20px;
+            justify-content: space-between;
+            width: 760px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px 20px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            border: 1px solid #1e3c72;
+            box-sizing: border-box;
         }
-        .team-name { color: #fff; font-weight: bold; font-size: 16px; letter-spacing: 1px; }
-        .score-display {
-            font-size: 32px; font-weight: 900; color: #fff; background: #111;
-            padding: 2px 15px; border-radius: 8px; min-width: 40px; text-align: center;
-            font-family: monospace; box-shadow: inset 0 0 5px rgba(255,255,255,0.2);
-        }
-        .vs { color: #ff9f43; font-weight: bold; font-style: italic; }
+        .player-ui { display: flex; flex-direction: column; gap: 5px; color: white; width: 45%; }
+        .hp-bar-outer { width: 100%; height: 12px; background: #333; border-radius: 6px; overflow: hidden; border: 1px solid #555; }
+        .hp-bar-inner { height: 100%; width: 100%; transition: width 0.1s; }
+        .red-hp { background: #ff4757; box-shadow: 0 0 8px #ff4757; }
+        .blue-hp { background: #2ed573; box-shadow: 0 0 8px #2ed573; }
+        .stats-text { font-size: 13px; font-weight: bold; letter-spacing: 0.5px; }
 
         .stadium-border {
-            padding: 6px; background: #333; border-radius: 12px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.6); position: relative;
+            padding: 4px; background: #222; border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7); position: relative;
         }
 
         canvas {
-            border: 4px solid #fff;
-            background-color: #27ae60;
-            background-image: repeating-linear-gradient(90deg, #27ae60, #27ae60 40px, #2ecc71 40px, #2ecc71 80px);
+            border: 2px solid #3b82f6;
+            background: #020208;
             border-radius: 6px; outline: none;
         }
 
-        .controls-btn { display: flex; gap: 15px; margin-top: 15px; }
+        .controls-btn { display: flex; gap: 15px; margin-top: 12px; }
         .btn {
-            background: #ff4757; color: white; border: none; padding: 10px 20px;
+            background: #3b82f6; color: white; border: none; padding: 10px 22px;
             border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: all 0.2s;
         }
         .btn-pause { background: #ff9f43; }
-        .btn:hover { filter: brightness(1.2); transform: translateY(-1px); }
-        .btn:active { transform: translateY(1px); }
+        .btn:hover { filter: brightness(1.2); }
         
-        .pause-overlay {
+        .overlay {
             display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.65); color: white; font-size: 42px; font-weight: bold;
-            justify-content: center; align-items: center; border-radius: 12px;
-            pointer-events: none; letter-spacing: 4px; text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.75); color: white; font-size: 36px; font-weight: bold;
+            justify-content: center; align-items: center; border-radius: 10px;
+            pointer-events: none; text-shadow: 0 0 10px rgba(255,255,255,0.5);
+            flex-direction: column; gap: 15px;
         }
     </style>
 </head>
 <body>
 
-    <div class="color-pickers-bar">
-        <div class="color-item">
-            <span>Áo Đội Đỏ:</span>
-            <input type="color" id="colorRed" value="#ff4757">
+    <!-- UI Thanh máu và Kills phía trên -->
+    <div class="status-container">
+        <div class="player-ui">
+            <div class="stats-text" style="color: #ff4757;">🔴 ĐỘI ĐỎ - KILLS: <span id="kills1">0</span></div>
+            <div class="hp-bar-outer"><div id="hp1" class="hp-bar-inner red-hp"></div></div>
         </div>
-        <div class="color-item">
-            <span>Áo Đội Xanh:</span>
-            <input type="color" id="colorBlue" value="#2ed573">
+        <div class="player-ui" style="text-align: right; align-items: flex-end;">
+            <div class="stats-text" style="color: #2ed573;">🟢 ĐỘI XANH - KILLS: <span id="kills2">0</span></div>
+            <div class="hp-bar-outer"><div id="hp2" class="hp-bar-inner blue-hp"></div></div>
         </div>
     </div>
 
-    <div class="scoreboard-container">
-        <span class="team-name" id="nameRed" style="color: #ff4757">ĐỘI ĐỎ</span>
-        <span class="score-display" id="score1">0</span>
-        <span class="vs">VS</span>
-        <span class="score-display" id="score2">0</span>
-        <span class="team-name" id="nameBlue" style="color: #2ed573">ĐỘI XANH</span>
-    </div>
-
+    <!-- Khung hiển thị màn chơi chiến đấu -->
     <div class="stadium-border">
-        <canvas id="gameCanvas" width="780" height="420" tabindex="1"></canvas>
-        <div class="pause-overlay" id="pauseOverlay">TRÒ CHƠI TẠM DỪNG</div>
+        <canvas id="gameCanvas" width="760" height="400" tabindex="1"></canvas>
+        <div class="overlay" id="gameOverlay">TRÒ CHƠI TẠM DỪNG</div>
     </div>
 
+    <!-- Nút tương tác nhanh -->
     <div class="controls-btn">
         <button class="btn btn-pause" id="btnPause" onclick="togglePause()">TẠM DỪNG (Space)</button>
-        <button class="btn" onclick="resetMatch()">LÀM MỚI TRẬN ĐẤU</button>
+        <button class="btn" onclick="resetGame()">HỒI SINH TRẬN ĐẤU</button>
     </div>
 
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
-        const pauseOverlay = document.getElementById("pauseOverlay");
+        const overlay = document.getElementById("gameOverlay");
         const btnPause = document.getElementById("btnPause");
-        
-        const colorRedInput = document.getElementById("colorRed");
-        const colorBlueInput = document.getElementById("colorBlue");
-        const nameRedLabel = document.getElementById("nameRed");
-        const nameBlueLabel = document.getElementById("nameBlue");
 
         canvas.focus();
         document.body.addEventListener("click", () => canvas.focus());
 
-        let score1 = 0;
-        let score2 = 0;
         let isPaused = false;
+        let gameOver = false;
 
-        const pWidth = 15;
-        const pHeight = 75;
-        const pSpeed = 6;
+        // Cấu hình người chơi
+        const shipSize = 30;
+        const shipSpeed = 5;
+        const maxHp = 100;
 
-        let redHauVeY = canvas.height / 2 - pHeight / 2;
-        let redTienDaoY = canvas.height / 2 - pHeight / 2;
-        let blueTienDaoY = canvas.height / 2 - pHeight / 2;
-        let blueHauVeY = canvas.height / 2 - pHeight / 2;
+        let p1 = { x: 50, y: 185, hp: maxHp, kills: 0, cooldown: 0 };
+        let p2 = { x: 680, y: 185, hp: maxHp, kills: 0, cooldown: 0 };
 
-        const redHauVeX = 40;
-        const redTienDaoX = 240;
-        const blueTienDaoX = canvas.width - 240 - pWidth;
-        const blueHauVeX = canvas.width - 40 - pWidth;
-
-        let ballX = canvas.width / 2;
-        let ballY = canvas.height / 2;
-        let ballRadius = 10;
-        let ballSpeedX = 5;
-        let ballSpeedY = 4;
-
+        let bullets = [];
+        let stars = [];
         const keys = {};
+
+        // Khởi tạo nền sao vũ trụ chuyển động sinh động
+        for (let i = 0; i < 40; i++) {
+            stars.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, size: Math.random() * 2 + 1, speed: Math.random() * 0.5 + 0.2 });
+        }
 
         window.addEventListener("keydown", (e) => {
             if (e.key === " " || e.key === "Spacebar") {
@@ -188,77 +160,90 @@ game_html = """
                 togglePause();
                 return;
             }
-            keys[e.key] = true;
-            if(["ArrowUp", "ArrowDown"].indexOf(e.key) > -1) {
+            keys[e.key.toLowerCase()] = true;
+            if(["arrowup", "arrowdown", "arrowleft", "arrowright"].indexOf(e.key.toLowerCase()) > -1) {
                 e.preventDefault();
             }
         });
-        
-        window.addEventListener("keyup", (e) => keys[e.key] = false);
+        window.addEventListener("keyup", (e) => keys[e.key.toLowerCase()] = false);
 
         function togglePause() {
+            if (gameOver) return;
             isPaused = !isPaused;
             if (isPaused) {
-                pauseOverlay.style.display = "flex";
+                overlay.style.display = "flex";
+                overlay.innerText = "TRÒ CHƠI TẠM DỪNG";
                 btnPause.innerText = "TIẾP TỤC (Space)";
-                btnPause.style.background = "#2ed573";
             } else {
-                pauseOverlay.style.display = "none";
+                overlay.style.display = "none";
                 btnPause.innerText = "TẠM DỪNG (Space)";
-                btnPause.style.background = "#ff9f43";
                 canvas.focus();
             }
         }
 
-        function resetBall(winner) {
-            ballX = canvas.width / 2;
-            ballY = canvas.height / 2;
-            ballSpeedX = winner === 1 ? 5 : -5;
-            ballSpeedY = (Math.random() > 0.5 ? 4 : -4);
-        }
-
-        function resetMatch() {
-            score1 = 0; score2 = 0;
-            document.getElementById("score1").innerText = 0;
-            document.getElementById("score2").innerText = 0;
-            isPaused = false;
-            pauseOverlay.style.display = "none";
+        function resetGame() {
+            p1.hp = maxHp; p2.hp = maxHp;
+            p1.x = 50; p1.y = 185;
+            p2.x = 680; p2.y = 185;
+            bullets = [];
+            gameOver = false; isPaused = false;
+            overlay.style.display = "none";
             btnPause.innerText = "TẠM DỪNG (Space)";
-            btnPause.style.background = "#ff9f43";
-            resetBall(1);
+            updateUI();
             canvas.focus();
         }
 
-        function checkCollision(pX, pY) {
-            return ballX + ballRadius > pX && 
-                   ballX - ballRadius < pX + pWidth && 
-                   ballY > pY && 
-                   ballY < pY + pHeight;
+        function updateUI() {
+            document.getElementById("hp1").style.width = p1.hp + "%";
+            document.getElementById("hp2").style.width = p2.hp + "%";
+            document.getElementById("kills1").innerText = p1.kills;
+            document.getElementById("kills2").innerText = p2.kills;
         }
 
         function update() {
-            if (isPaused) return;
+            if (isPaused || gameOver) return;
 
-            nameRedLabel.style.color = colorRedInput.value;
-            nameBlueLabel.style.color = colorBlueInput.value;
+            // --- PHI THUYỀN ĐỎ (W, A, S, D) ---
+            if (keys["w"]) p1.y = Math.max(0, p1.y - shipSpeed);
+            if (keys["s"]) p1.y = Math.min(canvas.height - shipSize, p1.y + shipSpeed);
+            if (keys["a"]) p1.x = Math.max(0, p1.x - shipSpeed);
+            if (keys["d"]) p1.x = Math.min(canvas.width/2 - shipSize, p1.x + shipSpeed); // Không qua phần sân đối phương
 
-            if (keys["w"] || keys["W"]) redTienDaoY = Math.max(0, redTienDaoY - pSpeed);
-            if (keys["s"] || keys["S"]) redTienDaoY = Math.min(canvas.height - pHeight, redTienDaoY + pSpeed);
-            
-            if (keys["f"] || keys["F"]) redHauVeY = Math.max(0, redHauVeY - pSpeed);
-            if (keys["v"] || keys["V"]) redHauVeY = Math.min(canvas.height - pHeight, redHauVeY + pSpeed);
-
-            if (keys["ArrowUp"]) blueTienDaoY = Math.max(0, blueTienDaoY - pSpeed);
-            if (keys["ArrowDown"]) blueTienDaoY = Math.min(canvas.height - pHeight, blueTienDaoY + pSpeed);
-
-            if (keys["i"] || keys["I"]) blueHauVeY = Math.max(0, blueHauVeY - pSpeed);
-            if (keys["k"] || keys["K"]) blueHauVeY = Math.min(canvas.height - pHeight, blueHauVeY + pSpeed);
-
-            ballX += ballSpeedX;
-            ballY += ballSpeedY;
-
-            if (ballY - ballRadius < 0 || ballY + ballRadius > canvas.height) {
-                ballSpeedY = -ballSpeedY;
+            // Bắn đạn Đỏ (F)
+            if (p1.cooldown > 0) p1.cooldown--;
+            if (keys["f"] && p1.cooldown === 0) {
+                bullets.push({ x: p1.x + shipSize, y: p1.y + shipSize/2 - 3, vx: 8, vy: 0, color: "#ff4757", owner: 1 });
+                p1.cooldown = 12; // Tốc độ bắn
             }
 
+            // --- PHI THUYỀN XANH (Mũi tên) ---
+            if (keys["arrowup"]) p2.y = Math.max(0, p2.y - shipSpeed);
+            if (keys["arrowdown"]) p2.y = Math.min(canvas.height - shipSize, p2.y + shipSpeed);
+            if (keys["arrowleft"]) p2.x = Math.max(canvas.width/2, p2.x - shipSpeed);
+            if (keys["arrowright"]) p2.x = Math.min(canvas.width - shipSize, p2.x + shipSpeed);
 
+            // Bắn đạn Xanh (M hoặc Phím 0)
+            if (p2.cooldown > 0) p2.cooldown--;
+            if ((keys["m"] || keys["0"]) && p2.cooldown === 0) {
+                bullets.push({ x: p2.x - 10, y: p2.y + shipSize/2 - 3, vx: -8, vy: 0, color: "#2ed573", owner: 2 });
+                p2.cooldown = 12;
+            }
+
+            // Cập nhật nền sao bay lùi tạo cảm giác đang di chuyển nhanh
+            stars.forEach(star => {
+                star.x -= star.speed;
+                if (star.x < 0) star.x = canvas.width;
+            });
+
+            // Cập nhật vị trí Đạn & kiểm tra va chạm cơ thể
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                let b = bullets[i];
+                b.x += b.vx;
+
+                // Xóa đạn bay ra khỏi màn hình
+                if (b.x < 0 || b.x > canvas.width) {
+                    bullets.splice(i, 1);
+                    continue;
+                }
+
+                // Đạn chạm Phi thuyền Xanh (Người chơi 2)
