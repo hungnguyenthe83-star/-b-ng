@@ -32,7 +32,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Đưa toàn bộ UI Điều khiển & Game vào nội bộ HTML để tránh lỗi mất Focus bàn phím của Streamlit
+# Khối mã nguồn HTML/JS/CSS độc lập, sạch sẽ, không dùng f-string để tránh lỗi cú pháp Python
 game_html = """
 <!DOCTYPE html>
 <html>
@@ -51,7 +51,6 @@ game_html = """
             overflow: hidden;
         }
         
-        /* Bộ tinh chỉnh màu áo ngay trong Game */
         .color-pickers-bar {
             display: flex;
             gap: 20px;
@@ -63,7 +62,6 @@ game_html = """
         .color-item { display: flex; align-items: center; gap: 8px; }
         .color-item input { cursor: pointer; border: none; width: 30px; height: 25px; border-radius: 4px; }
 
-        /* Bảng điểm Esport */
         .scoreboard-container {
             display: flex;
             align-items: center;
@@ -83,7 +81,6 @@ game_html = """
         }
         .vs { color: #ff9f43; font-weight: bold; font-style: italic; }
 
-        /* Khung sân vận động */
         .stadium-border {
             padding: 6px; background: #333; border-radius: 12px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.6); position: relative;
@@ -106,7 +103,6 @@ game_html = """
         .btn:hover { filter: brightness(1.2); transform: translateY(-1px); }
         .btn:active { transform: translateY(1px); }
         
-        /* Phủ mờ khi Tạm dừng */
         .pause-overlay {
             display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.65); color: white; font-size: 42px; font-weight: bold;
@@ -117,7 +113,6 @@ game_html = """
 </head>
 <body>
 
-    <!-- Khu vực chỉnh màu nội bộ không làm mất focus -->
     <div class="color-pickers-bar">
         <div class="color-item">
             <span>Áo Đội Đỏ:</span>
@@ -129,7 +124,6 @@ game_html = """
         </div>
     </div>
 
-    <!-- UI Bảng điểm -->
     <div class="scoreboard-container">
         <span class="team-name" id="nameRed" style="color: #ff4757">ĐỘI ĐỎ</span>
         <span class="score-display" id="score1">0</span>
@@ -138,13 +132,11 @@ game_html = """
         <span class="team-name" id="nameBlue" style="color: #2ed573">ĐỘI XANH</span>
     </div>
 
-    <!-- Khung sân cỏ -->
     <div class="stadium-border">
         <canvas id="gameCanvas" width="780" height="420" tabindex="1"></canvas>
         <div class="pause-overlay" id="pauseOverlay">TRÒ CHƠI TẠM DỪNG</div>
     </div>
 
-    <!-- Thanh nút chức năng -->
     <div class="controls-btn">
         <button class="btn btn-pause" id="btnPause" onclick="togglePause()">TẠM DỪNG (Space)</button>
         <button class="btn" onclick="resetMatch()">LÀM MỚI TRẬN ĐẤU</button>
@@ -156,13 +148,11 @@ game_html = """
         const pauseOverlay = document.getElementById("pauseOverlay");
         const btnPause = document.getElementById("btnPause");
         
-        // Element đổi màu
         const colorRedInput = document.getElementById("colorRed");
         const colorBlueInput = document.getElementById("colorBlue");
         const nameRedLabel = document.getElementById("nameRed");
         const nameBlueLabel = document.getElementById("nameBlue");
 
-        // Ép hệ thống nhận diện chuột và giữ tiêu điểm bàn phím liên tục
         canvas.focus();
         document.body.addEventListener("click", () => canvas.focus());
 
@@ -174,7 +164,6 @@ game_html = """
         const pHeight = 75;
         const pSpeed = 6;
 
-        // Vị trí cầu thủ 4 người
         let redHauVeY = canvas.height / 2 - pHeight / 2;
         let redTienDaoY = canvas.height / 2 - pHeight / 2;
         let blueTienDaoY = canvas.height / 2 - pHeight / 2;
@@ -185,7 +174,6 @@ game_html = """
         const blueTienDaoX = canvas.width - 240 - pWidth;
         const blueHauVeX = canvas.width - 40 - pWidth;
 
-        // Cấu hình bóng
         let ballX = canvas.width / 2;
         let ballY = canvas.height / 2;
         let ballRadius = 10;
@@ -194,7 +182,6 @@ game_html = """
 
         const keys = {};
 
-        // Bắt sự kiện phím
         window.addEventListener("keydown", (e) => {
             if (e.key === " " || e.key === "Spacebar") {
                 e.preventDefault();
@@ -202,7 +189,6 @@ game_html = """
                 return;
             }
             keys[e.key] = true;
-            // Chặn cuộn màn hình khi dùng phím mũi tên
             if(["ArrowUp", "ArrowDown"].indexOf(e.key) > -1) {
                 e.preventDefault();
             }
@@ -253,15 +239,26 @@ game_html = """
         function update() {
             if (isPaused) return;
 
-            // Đồng bộ màu sắc áo đấu theo thời gian thực khi chỉnh bảng chọn màu
             nameRedLabel.style.color = colorRedInput.value;
             nameBlueLabel.style.color = colorBlueInput.value;
 
-            // --- ĐIỀU KHIỂN CẦU THỦ ---
-            // Đội Đỏ - Tiền đạo (W / S)
             if (keys["w"] || keys["W"]) redTienDaoY = Math.max(0, redTienDaoY - pSpeed);
             if (keys["s"] || keys["S"]) redTienDaoY = Math.min(canvas.height - pHeight, redTienDaoY + pSpeed);
             
-            // Đội Đỏ - Hậu vệ (F / V)
+            if (keys["f"] || keys["F"]) redHauVeY = Math.max(0, redHauVeY - pSpeed);
+            if (keys["v"] || keys["V"]) redHauVeY = Math.min(canvas.height - pHeight, redHauVeY + pSpeed);
+
+            if (keys["ArrowUp"]) blueTienDaoY = Math.max(0, blueTienDaoY - pSpeed);
+            if (keys["ArrowDown"]) blueTienDaoY = Math.min(canvas.height - pHeight, blueTienDaoY + pSpeed);
+
+            if (keys["i"] || keys["I"]) blueHauVeY = Math.max(0, blueHauVeY - pSpeed);
+            if (keys["k"] || keys["K"]) blueHauVeY = Math.min(canvas.height - pHeight, blueHauVeY + pSpeed);
+
+            ballX += ballSpeedX;
+            ballY += ballSpeedY;
+
+            if (ballY - ballRadius < 0 || ballY + ballRadius > canvas.height) {
+                ballSpeedY = -ballSpeedY;
+            }
 
 
