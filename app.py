@@ -1,41 +1,49 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-# 1. Cấu hình trang Streamlit hiện đại
 st.set_page_config(
-    page_title="Pro Soccer Streamlit Arena", 
+    page_title="4-Player Pro Soccer Arena", 
     page_icon="⚽", 
     layout="centered"
 )
 
-# Thêm CSS tùy chỉnh cho giao diện Streamlit gọn gàng hơn
 st.markdown("""
     <style>
-    .block-container { padding-top: 2rem; padding-bottom: 2rem; }
+    .block-container { padding-top: 1.5rem; padding-bottom: 1.5rem; }
     h1 { text-align: center; color: #1E90FF; font-family: 'Arial Black', sans-serif; text-shadow: 2px 2px #000; }
-    .stButton>button { width: 100%; background-color: #ff4b4b; color: white; font-weight: bold; border-radius: 8px; }
     </style>
 """, unsafe_allow_html=True)
 
-st.title("⚽ PRO SOCCER ARENA")
+st.title("⚽ PRO SOCCER ARENA - 4 PLAYERS")
 
-# 2. BẢNG ĐIỀU KHIỂN UI (Streamlit Native Columns)
-col1, col2, col3 = st.columns([1, 1, 1])
-
+# Bảng điều khiển màu sắc
+col1, col2 = st.columns(2)
 with col1:
-    team1_color = st.color_picker("Áo Đội 1 (W/S)", "#FF4757")
+    team1_color = st.color_picker("Màu áo Đội Đỏ", "#FF4757")
 with col2:
-    team2_color = st.color_picker("Áo Đội 2 (⬆/⬇)", "#2ED573")
-with col3:
-    # Nút bấm ảo để nhắc nhở reset (game reset trực tiếp trong canvas mượt hơn)
-    st.write(" ")
-    st.write(" ")
-    difficulty = st.selectbox("Độ khó bóng", ["Bình thường", "Bóng xoáy Pro"])
+    team2_color = st.color_picker("Màu áo Đội Xanh", "#2ED573")
 
-# Định nghĩa tốc độ bóng dựa theo độ khó tuyển chọn
-ball_speed_modifier = 1.3 if difficulty == "Bóng xoáy Pro" else 1.0
+# Hướng dẫn nút bấm chia cột rõ ràng
+st.markdown(f"""
+<div style="background-color: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; margin-bottom: 15px; font-size: 14px;">
+    <strong>🎮 HƯỚNG DẪN ĐIỀU KHIỂN (4 NGƯỜI CHƠI):</strong><br>
+    <table style="width:100%; text-align:left; margin-top:5px; border-collapse: collapse;">
+        <tr style="color:{team1_color}; font-weight:bold;">
+            <td>🔴 ĐỘI ĐỎ:</td>
+            <td>Hậu vệ: <strong>F / V</strong></td>
+            <td>Tiền đạo: <strong>W / S</strong></td>
+        </tr>
+        <tr style="color:{team2_color}; font-weight:bold;">
+            <td>🟢 ĐỘI XANH:</td>
+            <td>Tiền đạo: <strong> Mũi tên ⬆ / ⬇</strong></td>
+            <td>Hậu vệ: <strong>I / K</strong></td>
+        </tr>
+    </table>
+    <div style="margin-top: 8px; text-align:center; color: #ff9f43;">⏸ Bấm phím <strong>Spacebar (Khoảng trắng)</strong> để Tạm dừng / Tiếp tục</div>
+</div>
+""", unsafe_allow_html=True)
 
-# 3. MÃ NGUỒN GAME HTML5 VỚI UI CAO CẤP (Giao diện Sân vận động)
+# Khung HTML Game
 game_html = f"""
 <!DOCTYPE html>
 <html>
@@ -47,248 +55,208 @@ game_html = f"""
             display: flex;
             justify-content: center;
             align-items: center;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: sans-serif;
             flex-direction: column;
             padding: 10px;
             border-radius: 16px;
-            box-shadow: inset 0 0 100px rgba(0,0,0,0.5);
         }}
-        
-        /* Bảng điểm UI Neon phong cách Esport */
         .scoreboard-container {{
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(0, 0, 0, 0.75);
-            padding: 12px 30px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px 25px;
             border-radius: 50px;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             border: 2px solid #4a90e2;
-            box-shadow: 0 0 20px rgba(74, 144, 226, 0.5);
             gap: 20px;
         }}
-        .team-name {{
-            color: #fff;
-            font-weight: bold;
-            font-size: 16px;
-            letter-spacing: 1px;
-        }}
+        .team-name {{ color: #fff; font-weight: bold; font-size: 16px; }}
         .score-display {{
-            font-size: 32px;
-            font-weight: 900;
-            color: #fff;
-            background: #222;
-            padding: 2px 15px;
-            border-radius: 8px;
-            border: 1px solid #555;
-            min-width: 40px;
-            text-align: center;
-            font-family: monospace;
+            font-size: 30px; font-weight: 900; color: #fff; background: #222;
+            padding: 2px 15px; border-radius: 8px; min-width: 40px; text-align: center;
         }}
-        .vs {{
-            color: #ff9f43;
-            font-weight: bold;
-            font-style: italic;
-        }}
-
-        /* Khung chứa sân vận động */
         .stadium-border {{
-            padding: 8px;
-            background: #333;
-            border-radius: 12px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+            padding: 6px; background: #333; border-radius: 12px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6); position: relative;
         }}
-
         canvas {{
             border: 4px solid #fff;
             background-color: #27ae60;
-            /* Tạo sọc cỏ đậm nhạt bóng đá chuyên nghiệp */
             background-image: repeating-linear-gradient(90deg, #27ae60, #27ae60 40px, #2ecc71 40px, #2ecc71 80px);
-            border-radius: 6px;
-            cursor: pointer;
-            outline: none;
+            border-radius: 6px; outline: none;
         }}
-
-        /* Chỉ dẫn điều khiển */
-        .info-bar {{
-            margin-top: 12px;
-            color: #e0e0e0;
-            font-size: 13px;
-            text-align: center;
-            background: rgba(0,0,0,0.4);
-            padding: 6px 20px;
-            border-radius: 20px;
+        .controls-btn {{
+            display: flex; gap: 15px; margin-top: 10px;
         }}
+        .btn {{
+            background: #ff4757; color: white; border: none; padding: 8px 18px;
+            border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px;
+        }}
+        .btn-pause {{ background: #ff9f43; }}
+        .btn:hover {{ filter: brightness(1.2); }}
         
-        .btn-reset {{
-            margin-top: 10px;
-            background: #ff4757;
-            color: white;
-            border: none;
-            padding: 6px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
+        /* Hiển thị chữ PAUSED đè lên sân game */
+        .pause-overlay {{
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); color: white; font-size: 40px; font-weight: bold;
+            justify-content: center; align-items: center; border-radius: 12px;
+            pointer-events: none; letter-spacing: 2px;
         }}
-        .btn-reset:hover {{ background: #ff6b81; }}
     </style>
 </head>
 <body>
 
-    <!-- UI Bảng điểm lớn -->
     <div class="scoreboard-container">
         <span class="team-name" style="color: {team1_color}">ĐỘI ĐỎ</span>
         <span class="score-display" id="score1">0</span>
-        <span class="vs">VS</span>
         <span class="score-display" id="score2">0</span>
         <span class="team-name" style="color: {team2_color}">ĐỘI XANH</span>
     </div>
 
-    <!-- Khung sân cỏ -->
     <div class="stadium-border">
-        <canvas id="gameCanvas" width="700" height="400" tabindex="1"></canvas>
+        <canvas id="gameCanvas" width="800" height="450" tabindex="1"></canvas>
+        <div class="pause-overlay" id="pauseOverlay">TẠM DỪNG</div>
     </div>
 
-    <button class="btn-reset" onclick="resetMatch()">LÀM MỚI TRẬN ĐẤU</button>
-
-    <div class="info-bar">
-        🕹️ Nhấp vào sân cỏ để kích hoạt điều khiển phím di chuyển cầu thủ!
+    <div class="controls-btn">
+        <button class="btn btn-pause" id="btnPause" onclick="togglePause()">TẠM DỪNG (Space)</button>
+        <button class="btn" onclick="resetMatch()">LÀM MỚI TRẬN DẤU</button>
     </div>
 
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
+        const pauseOverlay = document.getElementById("pauseOverlay");
+        const btnPause = document.getElementById("btnPause");
 
         canvas.focus();
 
         let score1 = 0;
         let score2 = 0;
+        let isPaused = false; // Trạng thái tạm dừng
 
-        const paddleWidth = 16;
-        const paddleHeight = 85;
-        
-        let p1Y = canvas.height / 2 - paddleHeight / 2;
-        let p2Y = canvas.height / 2 - paddleHeight / 2;
-        const paddleSpeed = 8;
+        // Cấu hình kích thước thanh cầu thủ
+        const pWidth = 15;
+        const pHeight = 75;
+        const pSpeed = 6;
 
-        // Cấu hình bóng chuyên nghiệp
+        // Tọa độ Y ban đầu cho 4 cầu thủ
+        let redHauVeY = canvas.height / 2 - pHeight / 2;
+        let redTienDaoY = canvas.height / 2 - pHeight / 2;
+        let blueTienDaoY = canvas.height / 2 - pHeight / 2;
+        let blueHauVeY = canvas.height / 2 - pHeight / 2;
+
+        // Vị trí X cố định cho sơ đồ chiến thuật 4 người
+        const redHauVeX = 40;
+        const redTienDaoX = 240;
+        const blueTienDaoX = canvas.width - 240 - pWidth;
+        const blueHauVeX = canvas.width - 40 - pWidth;
+
+        // Cấu hình bóng
         let ballX = canvas.width / 2;
         let ballY = canvas.height / 2;
-        let ballRadius = 11;
-        let baseSpeed = 5 * {ball_speed_modifier};
-        let ballSpeedX = baseSpeed;
-        let ballSpeedY = baseSpeed;
+        let ballRadius = 10;
+        let ballSpeedX = 5;
+        let ballSpeedY = 4;
 
         const keys = {};
 
         window.addEventListener("keydown", (e) => {{
+            if (e.key === " ") {{
+                e.preventDefault();
+                togglePause();
+                return;
+            }}
             keys[e.key] = true;
-            if(["ArrowUp", "ArrowDown", " "].indexOf(e.key) > -1) {{
+            if(["ArrowUp", "ArrowDown"].indexOf(e.key) > -1) {{
                 e.preventDefault();
             }}
         }});
+        
         window.addEventListener("keyup", (e) => keys[e.key] = false);
         canvas.addEventListener("click", () => canvas.focus());
+
+        function togglePause() {{
+            isPaused = !isPaused;
+            if (isPaused) {{
+                pauseOverlay.style.display = "flex";
+                btnPause.innerText = "TIẾP TỤC (Space)";
+                btnPause.style.background = "#2ed573";
+            }} else {{
+                pauseOverlay.style.display = "none";
+                btnPause.innerText = "TẠM DỪNG (Space)";
+                btnPause.style.background = "#ff9f43";
+                canvas.focus();
+            }}
+        }}
 
         function resetBall(winner) {{
             ballX = canvas.width / 2;
             ballY = canvas.height / 2;
-            ballSpeedX = winner === 1 ? baseSpeed : -baseSpeed;
+            ballSpeedX = winner === 1 ? 5 : -5;
             ballSpeedY = (Math.random() > 0.5 ? 4 : -4);
         }}
 
         function resetMatch() {{
-            score1 = 0;
-            score2 = 0;
+            score1 = 0; score2 = 0;
             document.getElementById("score1").innerText = 0;
             document.getElementById("score2").innerText = 0;
+            isPaused = false;
+            pauseOverlay.style.display = "none";
+            btnPause.innerText = "TẠM DỪNG (Space)";
+            btnPause.style.background = "#ff9f43";
             resetBall(1);
+            canvas.focus();
+        }}
+
+        // Hàm kiểm tra va chạm giữa bóng và một cầu thủ bất kỳ
+        function checkCollision(pX, pY) {{
+            return ballX + ballRadius > pX && 
+                   ballX - ballRadius < pX + pWidth && 
+                   ballY > pY && 
+                   ballY < pY + pHeight;
         }}
 
         function update() {{
-            if (keys["w"] || keys["W"]) p1Y = Math.max(0, p1Y - paddleSpeed);
-            if (keys["s"] || keys["S"]) p1Y = Math.min(canvas.height - paddleHeight, p1Y + paddleSpeed);
+            if (isPaused) return; // Nếu đang tạm dừng thì đóng băng logic game
 
-            if (keys["ArrowUp"]) p2Y = Math.max(0, p2Y - paddleSpeed);
-            if (keys["ArrowDown"]) p2Y = Math.min(canvas.height - paddleHeight, p2Y + paddleSpeed);
+            // --- DI CHUYỂN 4 CẦU THỦ ---
+            // 1. Đội Đỏ - Tiền đạo (W / S)
+            if (keys["w"] || keys["W"]) redTienDaoY = Math.max(0, redTienDaoY - pSpeed);
+            if (keys["s"] || keys["S"]) redTienDaoY = Math.min(canvas.height - pHeight, redTienDaoY + pSpeed);
+            
+            // 2. Đội Đỏ - Hậu vệ (F / V)
+            if (keys["f"] || keys["F"]) redHauVeY = Math.max(0, redHauVeY - pSpeed);
+            if (keys["v"] || keys["V"]) redHauVeY = Math.min(canvas.height - pHeight, redHauVeY + pSpeed);
 
+            // 3. Đội Xanh - Tiền đạo (Mũi tên Lên / Xuống)
+            if (keys["ArrowUp"]) blueTienDaoY = Math.max(0, blueTienDaoY - pSpeed);
+            if (keys["ArrowDown"]) blueTienDaoY = Math.min(canvas.height - pHeight, blueTienDaoY + pSpeed);
+
+            // 4. Đội Xanh - Hậu vệ (I / K)
+            if (keys["i"] || keys["I"]) blueHauVeY = Math.max(0, blueHauVeY - pSpeed);
+            if (keys["k"] || keys["K"]) blueHauVeY = Math.min(canvas.height - pHeight, blueHauVeY + pSpeed);
+
+            // --- DI CHUYỂN BÓNG ---
             ballX += ballSpeedX;
             ballY += ballSpeedY;
 
-            // Chạm biên dọc (Biên ném biên)
+            // Bóng đập biên dọc trên dưới
             if (ballY - ballRadius < 0 || ballY + ballRadius > canvas.height) {{
                 ballSpeedY = -ballSpeedY;
             }}
 
-            // Kiểm tra va chạm Cầu thủ 1 (Đỏ)
-            if (ballX - ballRadius < paddleWidth + 10) {{
-                if (ballY > p1Y && ballY < p1Y + paddleHeight) {{
+            // --- XỬ LÝ VA CHẠM CẦU THỦ ---
+            // Kiểm tra va chạm với Đội Đỏ (Bóng đang bay sang trái)
+            if (ballSpeedX < 0) {{
+                if (checkCollision(redTienDaoX, redTienDaoY)) {{
                     ballSpeedX = -ballSpeedX;
-                    let deltaY = ballY - (p1Y + paddleHeight / 2);
-                    ballSpeedY = deltaY * 0.22; // Hiệu ứng xoáy bóng góc rộng
-                }} else if (ballX < 0) {{
-                    score2++;
-                    document.getElementById("score2").innerText = score2;
-                    resetBall(2);
+                    ballSpeedY = (ballY - (redTienDaoY + pHeight/2)) * 0.2;
+                }} else if (checkCollision(redHauVeX, redHauVeY)) {{
+                    ballSpeedX = -ballSpeedX;
+                    ballSpeedY = (ballY - (redHauVeY + pHeight/2)) * 0.2;
                 }}
             }}
-
-            // Kiểm tra va chạm Cầu thủ 2 (Xanh)
-            if (ballX + ballRadius > canvas.width - paddleWidth - 10) {{
-                if (ballY > p2Y && ballY < p2Y + paddleHeight) {{
-                    ballSpeedX = -ballSpeedX;
-                    let deltaY = ballY - (p2Y + paddleHeight / 2);
-                    ballSpeedY = deltaY * 0.22;
-                }} else if (ballX > canvas.width) {{
-                    score1++;
-                    document.getElementById("score1").innerText = score1;
-                    resetBall(1);
-                }}
-            }}
-        }
-
-        function draw() {{
-            // Xóa khung hình để vẽ lại sân sọc
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // 1. Vẽ các đường kẻ vạch sân bóng chuyên nghiệp
-            ctx.strokeStyle = "rgba(255,255,255,0.6)";
-            ctx.lineWidth = 4;
             
-            // Vòng tròn trung tâm
-            ctx.beginPath();
-            ctx.arc(canvas.width / 2, canvas.height / 2, 70, 0, Math.PI * 2);
-            ctx.stroke();
-            
-            // Điểm giao bóng trung tâm
-            ctx.fillStyle = "rgba(255,255,255,0.8)";
-            ctx.beginPath();
-            ctx.arc(canvas.width / 2, canvas.height / 2, 5, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Đường giữa sân
-            ctx.beginPath();
-            ctx.moveTo(canvas.width / 2, 0);
-            ctx.lineTo(canvas.width / 2, canvas.height);
-            ctx.stroke();
-
-            // Vòng cấm địa Đội 1 (Trái)
-            ctx.strokeRect(0, canvas.height/4, 80, canvas.height/2);
-            // Vòng cấm địa Đội 2 (Phải)
-            ctx.strokeRect(canvas.width - 80, canvas.height/4, 80, canvas.height/2);
-
-            // 2. Vẽ Cầu thủ 1 (Đỏ - Bo tròn góc mượt mà)
-            ctx.fillStyle = "{team1_color}";
-            ctx.beginPath();
-            ctx.roundRect(10, p1Y, paddleWidth, paddleHeight, 8);
-            ctx.fill();
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = "{team1_color}";
-
-            // 3. Vẽ Cầu thủ 2 (Xanh - Bo tròn góc mượt mà)
-            ctx.fillStyle = "{team2_color}";
-            ctx.beginPath();
-            ctx.roundRect(canvas.width - paddleWidth - 10, p2Y, paddleWidth, paddleHeight, 8);
-            ctx.fill();
-            ctx.shadowColor = "{team2_color}";
 
